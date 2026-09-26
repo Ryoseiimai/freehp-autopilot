@@ -13,12 +13,17 @@
       "reference_urls": ""
     },
     "attempts": 0,
-    "status": "new",
+    "status": "closed",
     "history": [
       {
         "ts": "2026-09-27T05:35:55+09:00",
         "status": "new",
         "note": "Issue フォームから"
+      },
+      {
+        "ts": "2026-09-27T05:39:14+09:00",
+        "status": "closed",
+        "note": "Issue が閉じられた"
       }
     ]
   }
