@@ -77,7 +77,8 @@ jobs:
       - name: 状態を保存
         if: steps.guard.outputs.go == 'true'
         shell: bash
-        run: scripts/commit_state.sh "post: 記録を追加" state/posts.jsonl
+        run: |
+          scripts/commit_state.sh "post: 記録を追加" state/posts.jsonl
 
       - name: 失敗を Issue に記録（3回連続なら停止）
         if: failure()

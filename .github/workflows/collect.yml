@@ -57,7 +57,8 @@ jobs:
       - name: 状態を保存
         if: steps.guard.outputs.go == 'true'
         shell: bash
-        run: scripts/commit_state.sh "collect: ナレッジを更新" kb state/collect_seen.json materials
+        run: |
+          scripts/commit_state.sh "collect: ナレッジを更新" kb state/collect_seen.json materials
 
       - name: 失敗を Issue に記録（3回連続なら停止）
         if: failure()

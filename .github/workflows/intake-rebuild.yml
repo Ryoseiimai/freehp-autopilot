@@ -113,7 +113,8 @@ jobs:
       - name: 状態を保存
         if: steps.guard.outputs.go == 'true'
         shell: bash
-        run: scripts/commit_state.sh "intake: 依頼の状態を更新" state/requests.json state/replies.jsonl state/x_mentions.json
+        run: |
+          scripts/commit_state.sh "intake: 依頼の状態を更新" state/requests.json state/replies.jsonl state/x_mentions.json
 
       - name: 失敗を Issue に記録（3回連続なら停止）
         if: failure()
