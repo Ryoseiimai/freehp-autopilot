@@ -18,6 +18,8 @@ import urllib.request
 
 API_BASE = "https://api.x.com"
 KEY_NAMES = ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_SECRET")
+# 手元の ~/.x_api_tokens_*.zsh と同じ名前でも受け付ける（同じ順番の別名）
+KEY_ALIASES = ("X_CONSUMER_KEY", "X_CONSUMER_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET")
 TIMEOUT_SEC = 30
 MAX_WEIGHTED_LENGTH = 280
 URL_WEIGHT = 23
@@ -35,8 +37,12 @@ class AccountMismatch(XError):
     pass
 
 
+def _credential(i):
+    return (os.environ.get(KEY_NAMES[i], "") or os.environ.get(KEY_ALIASES[i], "")).strip()
+
+
 def credentials_present():
-    return all(os.environ.get(k, "").strip() for k in KEY_NAMES)
+    return all(_credential(i) for i in range(len(KEY_NAMES)))
 
 
 def weighted_length(text):
@@ -74,7 +80,7 @@ def sign(method, url, params, creds, nonce, timestamp):
 
 
 def _auth_header(method, url, query):
-    creds = tuple(os.environ[k].strip() for k in KEY_NAMES)
+    creds = tuple(_credential(i) for i in range(len(KEY_NAMES)))
     return sign(method, url, query, creds, secrets.token_hex(16), int(time.time()))
 
 

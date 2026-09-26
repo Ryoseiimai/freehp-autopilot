@@ -28,6 +28,13 @@ class XApiTest(unittest.TestCase):
         )
         self.assertIn('oauth_signature="hCtSmYh%2BiHYCEqBWrE7C7hYmtUk%3D"', header)
 
+    def test_credentials_accept_aliases(self):
+        env = {"X_CONSUMER_KEY": "a", "X_CONSUMER_SECRET": "b", "X_ACCESS_TOKEN": "c", "X_ACCESS_TOKEN_SECRET": "d"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            self.assertTrue(xapi.credentials_present())
+        with mock.patch.dict(os.environ, {"X_API_KEY": "a"}, clear=True):
+            self.assertFalse(xapi.credentials_present())
+
     def test_weighted_length(self):
         self.assertEqual(xapi.weighted_length("abc"), 3)
         self.assertEqual(xapi.weighted_length("あいう"), 6)
