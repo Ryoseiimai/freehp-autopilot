@@ -1,0 +1,66 @@
+[
+  {
+    "id": "gallery",
+    "need": "写真をたくさん見せたい",
+    "name": "写真ギャラリー",
+    "desc": "料理・店内・施術例・作品など、写真が多いお店に。1枚目を大きく見せ、押すと画面いっぱいに拡大します。 操作 押して拡大。左右の矢印キーで送り、Escで閉じる。スマホは左右にスワイプ 枚数 3〜12枚。枚数に合わせて並びが変わり、最後の行に穴が空かない",
+    "url": "https://freehp.jp/mihon/parts/#gallery",
+    "image": "https://freehp.jp/mihon/parts/img/soda-l.jpg"
+  },
+  {
+    "id": "contact",
+    "need": "電話やLINEで予約を受けたい",
+    "name": "予約・問い合わせ",
+    "desc": "電話・LINE・予約サイトのある店に。いま営業中かをページが計算し、営業中は電話、時間外は予約とLINEを先に出します。 時刻 日本時間で計算。曜日ごとの営業時間・昼休み・定休日を書ける 送信 フォームは持たない。外の予約ページ・LINE・電話へつなぐだけ",
+    "url": "https://freehp.jp/mihon/parts/#contact",
+    "image": "https://freehp.jp/mihon/parts/ogp.png"
+  },
+  {
+    "id": "map",
+    "need": "場所が分かりにくいと言われる",
+    "name": "地図",
+    "desc": "来てもらう店すべてに。Google マップを埋め込み、スマホの地図アプリで開くボタンと道順のボタンを添えます。 読み込み 画面に近づいてから地図を読み込む。APIキーは要らない 差し替え data-query とリンクの query= に住所か店名を書く",
+    "url": "https://freehp.jp/mihon/parts/#map",
+    "image": "https://freehp.jp/mihon/parts/ogp.png"
+  },
+  {
+    "id": "menu",
+    "need": "メニューと料金を載せたい",
+    "name": "メニュー・料金表",
+    "desc": "飲食店の品書き、美容室・整体の料金に。分類をタブで切り替えます。写真のある品だけ大きく見せる形と、文字だけの形があります。 形 外側のクラスを fhp-menu--photo か fhp-menu--text にする 税 価格は税込で書き、分類の横に「税込」と出す",
+    "url": "https://freehp.jp/mihon/parts/#menu",
+    "image": "https://freehp.jp/mihon/parts/img/soda-ice-l.jpg"
+  },
+  {
+    "id": "voice",
+    "need": "ボイスサンプルを聞けるようにしたい",
+    "name": "音声・ボイスサンプル",
+    "desc": "声優・VTuber・歌い手・音楽教室に。ページの中で再生でき、1つ再生すると他は止まります。波形を押すと、その位置から聞けます。 音声 mp3 を <audio> に入れる。波形の形は data-peaks （無ければ一定の高さ） 操作 ボタンで再生と一時停止。波形にフォーカスして左右キーで位置を変える",
+    "url": "https://freehp.jp/mihon/parts/#voice",
+    "image": "https://freehp.jp/mihon/parts/ogp.png"
+  },
+  {
+    "id": "faq",
+    "need": "同じ質問を何度もされる",
+    "name": "よくある質問",
+    "desc": "予約・支払い・駐車場など、電話でよく聞かれることがある店に。押すと答えが開きます。 仕組み <details> をそのまま使うので JS は要らない。ページ内検索でも答えが見つかる",
+    "url": "https://freehp.jp/mihon/parts/#faq",
+    "image": "https://freehp.jp/mihon/parts/ogp.png"
+  },
+  {
+    "id": "news",
+    "need": "休みや新作を知らせたい",
+    "name": "お知らせ",
+    "desc": "臨時休業・新メニュー・イベントをよく出す店に。新しい順に並べ、2週間以内のものに「新着」を付けます。古いものは畳みます。 書き方 1件ずつ日付（ time の datetime ）を付けて足すだけ。順番は自動で並ぶ",
+    "url": "https://freehp.jp/mihon/parts/#news",
+    "image": "https://freehp.jp/mihon/parts/ogp.png"
+  },
+  {
+    "id": "hearing",
+    "need": "何を載せればいいか分からない",
+    "name": "聞き返し",
+    "desc": "要望がまだはっきりしない相手に。4つの質問に答えると、合う部品の組み合わせを理由つきで出します。送信はせず、相談のメールを開くリンクだけ出します。 提案 いちばん見てほしいものに合う部品を「まず入れる部品」として先に出す",
+    "url": "https://freehp.jp/mihon/parts/#hearing",
+    "image": "https://freehp.jp/mihon/parts/ogp.png"
+  }
+]

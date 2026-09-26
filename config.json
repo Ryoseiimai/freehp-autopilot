@@ -1,0 +1,92 @@
+{
+  "brand": {
+    "product": "3000円ホームページ",
+    "site_label": "3000円ホームページ（freehp.jp）",
+    "site_url": "https://freehp.jp/",
+    "price_line": "制作3,000円（税込）だけ・月額なし・独自ドメインは原価",
+    "x_handle": "freehp3000"
+  },
+  "models": {
+    "default": "claude-sonnet-5",
+    "hard": "claude-opus-5-5"
+  },
+  "post": {
+    "jst_start_hour": 8,
+    "jst_end_hour": 22,
+    "max_posts_per_day": 10,
+    "max_url_posts_per_day": 1,
+    "url_post_hours": [
+      12,
+      20
+    ],
+    "candidates": 3,
+    "min_score": 90,
+    "jev_min_prob": 0.5,
+    "similarity_days": 30,
+    "similarity_max": 0.4,
+    "material_cooldown_days": 14,
+    "recent_type_window": 3,
+    "types": [
+      "tip",
+      "check",
+      "rewrite",
+      "law",
+      "part",
+      "mihon",
+      "photo",
+      "offer"
+    ]
+  },
+  "quality": {
+    "banned_words": [
+      "無料",
+      "タダ",
+      "業界最安",
+      "最安",
+      "必ず",
+      "誰でも",
+      "DM",
+      "ＤＭ",
+      "ダイレクトメッセージ",
+      "絶対",
+      "日本一",
+      "No.1",
+      "ナンバーワン"
+    ],
+    "allowed_url_hosts": [
+      "freehp.jp",
+      "ryoseiimai.github.io"
+    ],
+    "small_number_max": 10,
+    "always_allowed_numbers": [
+      "3000",
+      "3,000"
+    ]
+  },
+  "collect": {
+    "max_new_per_run": 4,
+    "min_relevance": 6,
+    "page_recheck_days": 30,
+    "stale_after_days": 365,
+    "feed_item_max_age_days": 120,
+    "text_limit": 12000
+  },
+  "intake": {
+    "max_rebuilds_per_day": 5,
+    "max_replies_per_day": 10,
+    "max_url_replies_per_day": 3,
+    "request_label": "request",
+    "site_repo": "Ryoseiimai/free-hp-site",
+    "publish_dir": "mihon/r",
+    "public_base": "https://freehp.jp/mihon/r/",
+    "min_design_score": 85
+  },
+  "failures": {
+    "stop_after_consecutive": 3,
+    "label": "failure"
+  },
+  "report": {
+    "issue_title": "毎朝の報告（FreeHP オートパイロット）",
+    "label": "report"
+  }
+}

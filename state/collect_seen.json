@@ -1,0 +1,26 @@
+{
+  "https://developers.google.com/search/docs/fundamentals/seo-starter-guide?hl=ja": {
+    "status": "kept",
+    "kb_path": "kb:seo/2026-09-27-google-seo-starter-guide.md",
+    "hash": "a04720c6d1af4b26",
+    "checked_at": "2026-09-27T05:03:41+09:00"
+  },
+  "https://developers.google.com/search/docs/appearance/structured-data/local-business?hl=ja": {
+    "status": "kept",
+    "kb_path": "kb:seo/2026-09-27-local-business-structured-data.md",
+    "hash": "20c0e78d11a23f9b",
+    "checked_at": "2026-09-27T05:04:00+09:00"
+  },
+  "https://www.caa.go.jp/notice/entry/047508/": {
+    "status": "rejected",
+    "reason": "関連が低い（2）",
+    "hash": "6b57800203ce5887",
+    "checked_at": "2026-09-27T05:04:12+09:00"
+  },
+  "https://www.caa.go.jp/notice/entry/047602/": {
+    "status": "rejected",
+    "reason": "関連が低い（2）",
+    "hash": "167a9259bd03d95e",
+    "checked_at": "2026-09-27T05:04:21+09:00"
+  }
+}

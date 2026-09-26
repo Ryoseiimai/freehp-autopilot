@@ -1,0 +1,70 @@
+name: collect
+# 6時間ごと（日本時間 3:07 9:07 15:07 21:07）。一次情報を集めて kb/ に積み、材料（materials/）も作り直す。
+on:
+  schedule:
+    - cron: '7 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: STOP の確認
+        id: guard
+        shell: bash
+        run: |
+          mkdir -p out
+          if [ -f STOP ]; then
+            echo "STOP ファイルがあるので全ジョブ停止中（何もしません）" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 材料を free-hp-site から作り直す
+        if: steps.guard.outputs.go == 'true'
+        shell: bash
+        run: |
+          git clone -q --depth 1 https://github.com/Ryoseiimai/free-hp-site.git .site
+          python3 tools/build_materials.py .site 2>&1 | tee out/collect.log
+
+      - name: Claude Code CLI（OAuth トークンだけのとき）
+        if: steps.guard.outputs.go == 'true' && env.ANTHROPIC_API_KEY == '' && env.CLAUDE_CODE_OAUTH_TOKEN != ''
+        shell: bash
+        run: npm install -g @anthropic-ai/claude-code >/dev/null && claude --version
+
+      - name: 集めて要約する
+        if: steps.guard.outputs.go == 'true'
+        shell: bash
+        run: python3 -m autopilot.collect 2>&1 | tee -a out/collect.log
+
+      - name: 状態を保存
+        if: steps.guard.outputs.go == 'true'
+        shell: bash
+        run: scripts/commit_state.sh "collect: ナレッジを更新" kb state/collect_seen.json materials
+
+      - name: 失敗を Issue に記録（3回連続なら停止）
+        if: failure()
+        shell: bash
+        run: python3 -m autopilot.failures fail --job collect --workflow collect.yml --log out/collect.log
+
+      - name: 失敗 Issue が開いていれば閉じる
+        if: success() && steps.guard.outputs.go == 'true'
+        shell: bash
+        run: python3 -m autopilot.failures ok --job collect

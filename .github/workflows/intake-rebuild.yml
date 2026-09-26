@@ -1,0 +1,126 @@
+name: intake-rebuild
+# 要望の受け口 → 見本の作り直し → 検品 → free-hp-site へ PR → 公開されたら返事。
+# Issue フォーム・repository_dispatch はイベントで即時に動く。
+# 15分ごとの巡回（メンションの読み取り・PR のマージ確認）は、repo 変数 INTAKE_POLL_ENABLED=1 のときだけ動く
+# （private repo の無料枠は月2,000分。15分ごとに毎回動かすと月約2,900分かかるため既定は止めている）。
+on:
+  issues:
+    types: [opened, edited, reopened, labeled]
+  repository_dispatch:
+    types: [freehp-request]
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '1=PR を出さない・返事しない（既定）/ 0=本番'
+        type: choice
+        options: ['1', '0']
+        default: '1'
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: intake-rebuild
+  cancel-in-progress: false
+
+jobs:
+  intake:
+    if: >-
+      (github.event_name != 'schedule' || vars.INTAKE_POLL_ENABLED == '1') &&
+      (github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'request'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || vars.DRY_RUN || '1' }}
+      AUTO_MERGE: ${{ vars.AUTO_MERGE || '0' }}
+      X_MENTIONS_ENABLED: ${{ vars.X_MENTIONS_ENABLED || '0' }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      X_API_KEY: ${{ secrets.X_API_KEY }}
+      X_API_SECRET: ${{ secrets.X_API_SECRET }}
+      X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+      X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+      FREEHP_SITE_TOKEN: ${{ secrets.FREEHP_SITE_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      SITE_DIR: .site
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: STOP の確認
+        id: guard
+        shell: bash
+        run: |
+          mkdir -p out
+          if [ -f STOP ]; then
+            echo "STOP ファイルがあるので全ジョブ停止中（何もしません）" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 作り直す依頼があるか
+        id: pending
+        if: steps.guard.outputs.go == 'true'
+        shell: bash
+        run: |
+          pending=$(python3 -m autopilot.intake --has-pending)
+          echo "pending=$pending" >> "$GITHUB_OUTPUT"
+          echo "作り直す依頼: $pending"
+
+      - name: free-hp-site の作業コピー
+        if: steps.pending.outputs.pending == 'true'
+        shell: bash
+        run: git clone -q --depth 1 https://github.com/Ryoseiimai/free-hp-site.git .site
+
+      - name: Playwright のキャッシュ
+        if: steps.pending.outputs.pending == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-v1
+
+      - name: Playwright
+        if: steps.pending.outputs.pending == 'true'
+        shell: bash
+        run: |
+          python3 -m pip install -q -r requirements.txt
+          python3 -m playwright install --with-deps chromium >/dev/null
+
+      - name: Claude Code CLI（OAuth トークンだけのとき）
+        if: steps.pending.outputs.pending == 'true' && env.ANTHROPIC_API_KEY == '' && env.CLAUDE_CODE_OAUTH_TOKEN != ''
+        shell: bash
+        run: npm install -g @anthropic-ai/claude-code >/dev/null && claude --version
+
+      - name: 受け付けて作り直す（DRY_RUN=${{ env.DRY_RUN }}）
+        if: steps.guard.outputs.go == 'true'
+        shell: bash
+        run: python3 -m autopilot.intake 2>&1 | tee out/intake.log
+
+      - name: 作った見本とスクリーンショット
+        if: always() && steps.pending.outputs.pending == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rebuild-${{ github.run_id }}
+          path: out/rebuild/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: 状態を保存
+        if: steps.guard.outputs.go == 'true'
+        shell: bash
+        run: scripts/commit_state.sh "intake: 依頼の状態を更新" state/requests.json state/replies.jsonl state/x_mentions.json
+
+      - name: 失敗を Issue に記録（3回連続なら停止）
+        if: failure()
+        shell: bash
+        run: python3 -m autopilot.failures fail --job intake-rebuild --workflow intake-rebuild.yml --log out/intake.log
+
+      - name: 失敗 Issue が開いていれば閉じる
+        if: success() && steps.guard.outputs.go == 'true'
+        shell: bash
+        run: python3 -m autopilot.failures ok --job intake-rebuild

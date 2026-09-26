@@ -1,0 +1,19 @@
+[
+  {"id": "google-search-central-blog", "kind": "feed", "url": "https://developers.google.com/search/blog/feed.xml", "publisher": "Google 検索セントラル ブログ", "category": "seo", "include": []},
+  {"id": "webdev-blog", "kind": "feed", "url": "https://web.dev/static/blog/feed.xml", "publisher": "web.dev", "category": "web", "include": []},
+  {"id": "chusho-news", "kind": "feed", "url": "https://www.chusho.meti.go.jp/rss/index.xml", "publisher": "中小企業庁", "category": "hojokin", "include": ["補助金", "小規模", "IT導入", "販路", "デジタル", "持続化", "省力化", "公募", "支援"]},
+  {"id": "mirasapo", "kind": "feed", "url": "https://mirasapo-plus.go.jp/feed/", "publisher": "ミラサポplus（中小企業庁）", "category": "hojokin", "include": ["補助金", "小規模", "IT", "販路", "デジタル", "持続化", "集客", "ホームページ", "EC"]},
+  {"id": "caa-news", "kind": "feed", "url": "https://www.caa.go.jp/news.rss", "publisher": "消費者庁", "category": "law", "include": ["景品表示", "表示", "特定商取引", "ステルス", "広告", "措置命令", "打消し", "口コミ", "通信販売", "二重価格"]},
+
+  {"id": "seo-starter-guide", "kind": "page", "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide?hl=ja", "publisher": "Google 検索セントラル", "category": "seo"},
+  {"id": "local-business-structured-data", "kind": "page", "url": "https://developers.google.com/search/docs/appearance/structured-data/local-business?hl=ja", "publisher": "Google 検索セントラル", "category": "seo"},
+  {"id": "google-images-best-practices", "kind": "page", "url": "https://developers.google.com/search/docs/appearance/google-images?hl=ja", "publisher": "Google 検索セントラル", "category": "seo"},
+  {"id": "web-vitals", "kind": "page", "url": "https://web.dev/articles/vitals?hl=ja", "publisher": "web.dev", "category": "web"},
+  {"id": "gbp-local-ranking", "kind": "page", "url": "https://support.google.com/business/answer/7091?hl=ja", "publisher": "Google ビジネス プロフィール ヘルプ", "category": "shukyaku"},
+  {"id": "gbp-tips", "kind": "page", "url": "https://support.google.com/business/answer/3038177?hl=ja", "publisher": "Google ビジネス プロフィール ヘルプ", "category": "shukyaku"},
+  {"id": "caa-fair-labeling", "kind": "page", "url": "https://www.caa.go.jp/policies/policy/representation/fair_labeling/", "publisher": "消費者庁", "category": "law"},
+  {"id": "caa-stealth-marketing", "kind": "page", "url": "https://www.caa.go.jp/policies/policy/representation/fair_labeling/stealth_marketing/", "publisher": "消費者庁", "category": "law"},
+  {"id": "tokushoho-mailorder", "kind": "page", "url": "https://www.no-trouble.caa.go.jp/what/mailorder/", "publisher": "消費者庁 特定商取引法ガイド", "category": "law"},
+  {"id": "ppc-personal-info", "kind": "page", "url": "https://www.ppc.go.jp/personalinfo/legal/", "publisher": "個人情報保護委員会", "category": "law"},
+  {"id": "jizokuka-hojokin", "kind": "page", "url": "https://jizokukahojokin.info/", "publisher": "小規模事業者持続化補助金 事務局（商工会議所地区）", "category": "hojokin"}
+]

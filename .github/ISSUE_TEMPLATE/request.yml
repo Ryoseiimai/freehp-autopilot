@@ -1,0 +1,43 @@
+name: 見本の作り直しの依頼
+description: お店のことを書くと、オートパイロットが見本のホームページを作り直します（自動・数分〜）。
+title: "[依頼] "
+labels: ["request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        書いてもらった内容だけで見本を作ります。電話番号や住所は、ページに載せてよいものだけを書いてください。
+        作り直したいときは、この Issue に `rebuild` ラベルを付けてください。
+  - type: input
+    id: shop_name
+    attributes:
+      label: 店名
+      placeholder: 例）パン工房こむぎ
+    validations:
+      required: true
+  - type: input
+    id: industry
+    attributes:
+      label: 業種
+      placeholder: 例）パン屋
+    validations:
+      required: true
+  - type: textarea
+    id: wants
+    attributes:
+      label: 載せたいこと
+      description: 見てほしいもの・よく聞かれること・営業時間・定休日など。載せてよい連絡先があればここに。
+      placeholder: 例）毎朝の焼き上がり時間を載せたい。人気のパンと値段。定休日は月曜。
+    validations:
+      required: true
+  - type: input
+    id: mood
+    attributes:
+      label: 雰囲気
+      placeholder: 例）朝の光の入る明るい店。素朴だけど古くさくない感じ
+  - type: input
+    id: reference_urls
+    attributes:
+      label: 参考URL
+      description: 今のホームページや、好きな雰囲気のページがあれば。
+      placeholder: https://

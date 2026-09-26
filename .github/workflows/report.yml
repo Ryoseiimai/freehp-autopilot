@@ -1,0 +1,72 @@
+name: report
+# 毎朝8時（日本時間）に前日の結果を Issue「毎朝の報告」へ。メールの設定があればメールも。
+on:
+  schedule:
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+    inputs:
+      day:
+        description: '報告する日（YYYY-MM-DD・空なら前日）'
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DRY_RUN: ${{ vars.DRY_RUN || '1' }}
+      REPORT_DAY: ${{ inputs.day }}
+      X_API_KEY: ${{ secrets.X_API_KEY }}
+      X_API_SECRET: ${{ secrets.X_API_SECRET }}
+      X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+      X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+      MAIL_SMTP_HOST: ${{ secrets.MAIL_SMTP_HOST }}
+      MAIL_SMTP_PORT: ${{ secrets.MAIL_SMTP_PORT }}
+      MAIL_SMTP_USER: ${{ secrets.MAIL_SMTP_USER }}
+      MAIL_SMTP_PASS: ${{ secrets.MAIL_SMTP_PASS }}
+      MAIL_TO: ${{ secrets.MAIL_TO }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: STOP の確認
+        id: guard
+        shell: bash
+        run: |
+          mkdir -p out
+          if [ -f STOP ]; then
+            echo "STOP ファイルがあるので全ジョブ停止中（何もしません）" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 前日の報告をまとめる
+        if: steps.guard.outputs.go == 'true'
+        shell: bash
+        run: python3 -m autopilot.report 2>&1 | tee out/report.log
+
+      - name: 状態を保存
+        if: steps.guard.outputs.go == 'true'
+        shell: bash
+        run: scripts/commit_state.sh "report: 毎朝の報告" reports
+
+      - name: 失敗を Issue に記録（3回連続なら停止）
+        if: failure()
+        shell: bash
+        run: python3 -m autopilot.failures fail --job report --workflow report.yml --log out/report.log
+
+      - name: 失敗 Issue が開いていれば閉じる
+        if: success() && steps.guard.outputs.go == 'true'
+        shell: bash
+        run: python3 -m autopilot.failures ok --job report
