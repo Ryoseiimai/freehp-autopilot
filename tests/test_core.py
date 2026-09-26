@@ -57,6 +57,25 @@ class GateTest(unittest.TestCase):
         self.assertIn("DM", joined)
         self.assertEqual(gate.hard_problems("制作は3,000円（税込）だけです", "", CFG, url_allowed=False), [])
 
+    def test_zero_yen_needs_running_fee_nearby(self):
+        ok = [
+            "制作0円、運用費 年3,000円（税込）でホームページを持てます。",
+            "制作は0円です。運用費として年3,000円（税込）をいただきます。",
+            "制作０円・運用費（年間３，０００円）です。",
+        ]
+        for text in ok:
+            self.assertFalse(gate.zero_yen_without_fee(gate.normalize(text)), text)
+            self.assertEqual(gate.hard_problems(text, "", CFG, url_allowed=False), [], text)
+        ng = [
+            "制作0円でホームページが持てます。",
+            "制作0円です。お気軽にどうぞ。運用費 年3,000円です。",
+            "運用費 年3,000円です。写真の話。次に制作0円。",
+        ]
+        for text in ng:
+            self.assertTrue(gate.zero_yen_without_fee(gate.normalize(text)), text)
+        self.assertFalse(gate.zero_yen_without_fee("制作は3,000円です。"))
+        self.assertFalse(gate.zero_yen_without_fee("30円の違い"))
+
     def test_numbers_must_come_from_material(self):
         self.assertTrue(any("1234" in p for p in gate.hard_problems("電話は1234番", "材料", CFG, False)))
         self.assertEqual(gate.hard_problems("営業は18時半まで", "18時半に閉店", CFG, False), [])

@@ -12,6 +12,9 @@ from .common import log
 NUM_RE = re.compile(r"[0-9][0-9,.]*")
 MENTION_RE = re.compile(r"@[A-Za-z0-9_]{1,15}")
 ZERO_YEN_RE = re.compile(r"(?<![0-9,])0円")
+# 「制作0円」は、同じ文か直後の文に運用費（年3,000円）が書いてあるときだけ通す（景表法の有利誤認対策）
+RUNNING_FEE_RE = re.compile(r"運用費[^。！？!?\n]{0,8}?年間?\s*3,?000円")
+SENTENCE_END_RE = re.compile(r"[。！？!?\n]")
 ITEM_FLOOR = 7
 
 RUBRIC = [
@@ -42,6 +45,29 @@ def numbers_in(text):
     return {m.group(0).replace(",", "").rstrip(".") for m in NUM_RE.finditer(text)}
 
 
+def sentences(text):
+    """文の終わり（。！？改行）で区切り、(開始位置, 文) のリストにする。"""
+    out, start = [], 0
+    for m in SENTENCE_END_RE.finditer(text):
+        out.append((start, text[start:m.end()]))
+        start = m.end()
+    if start < len(text):
+        out.append((start, text[start:]))
+    return out
+
+
+def zero_yen_without_fee(text):
+    """「0円」があるのに、その文と直後の文のどちらにも運用費の記載が無ければ True。"""
+    sents = sentences(text)
+    for i, (_, sent) in enumerate(sents):
+        if not ZERO_YEN_RE.search(sent):
+            continue
+        window = sent + (sents[i + 1][1] if i + 1 < len(sents) else "")
+        if not RUNNING_FEE_RE.search(window):
+            return True
+    return False
+
+
 def hard_problems(text, material_text, cfg, url_allowed):
     """機械で判定できる決まりを確かめ、問題のリストを返す（空なら合格）。"""
     q = cfg["quality"]
@@ -54,8 +80,8 @@ def hard_problems(text, material_text, cfg, url_allowed):
                 problems.append(f"禁止語「{word}」")
         elif w in norm:
             problems.append(f"禁止語「{word}」")
-    if ZERO_YEN_RE.search(norm):
-        problems.append("「0円」は無料と同じ意味になるので使わない")
+    if zero_yen_without_fee(norm):
+        problems.append("「0円」には、同じ文か直後の文に「運用費 年3,000円」を添える")
     if MENTION_RE.search(xapi.URL_RE.sub(" ", norm)):
         problems.append("@ で人に呼びかけている")
 
