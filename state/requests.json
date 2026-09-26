@@ -1,1 +1,25 @@
-{}
+{
+  "gh-2": {
+    "id": "gh-2",
+    "source": "issue",
+    "issue": 2,
+    "author": "Ryoseiimai",
+    "received_at": "2026-09-27T05:35:55+09:00",
+    "fields": {
+      "shop_name": "テスト食堂（自動検証用）",
+      "industry": "食堂",
+      "wants": "日替わり定食",
+      "mood": "",
+      "reference_urls": ""
+    },
+    "attempts": 0,
+    "status": "new",
+    "history": [
+      {
+        "ts": "2026-09-27T05:35:55+09:00",
+        "status": "new",
+        "note": "Issue フォームから"
+      }
+    ]
+  }
+}
