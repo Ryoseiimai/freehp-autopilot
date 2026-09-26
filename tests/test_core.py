@@ -136,6 +136,13 @@ class IntakeTest(unittest.TestCase):
         self.assertEqual(got["wants"], "焼き上がり時間\n定休日")
         self.assertEqual(got["mood"], "")
 
+    def test_closed_issue_drops_pending_request(self):
+        requests = {"gh-5": {"id": "gh-5", "source": "issue", "issue": 5, "status": "new", "history": []}}
+        with mock.patch.object(intake.github, "available", return_value=True), \
+             mock.patch.object(intake.github, "list_issues", return_value=[]):
+            self.assertEqual(intake.from_issues(requests, "request"), 0)
+        self.assertEqual(requests["gh-5"]["status"], "closed")
+
     def test_reply_respects_caps_and_dry_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "replies.jsonl"

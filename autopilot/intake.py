@@ -52,7 +52,13 @@ def from_issues(requests, label):
         log("  GH_TOKEN が無いので Issue は見ません")
         return 0
     added = 0
-    for issue in github.list_issues(label):
+    open_issues = github.list_issues(label)
+    open_ids = {f"gh-{i['number']}" for i in open_issues}
+    for rid, req in requests.items():
+        # Issue が閉じられた依頼は、まだ作っていなければ取りやめる
+        if req.get("source") == "issue" and rid not in open_ids and req["status"] in ("new", "failed"):
+            stamp(req, "closed", "Issue が閉じられた")
+    for issue in open_issues:
         rid = f"gh-{issue['number']}"
         labels = {lb["name"] for lb in issue.get("labels", [])}
         if rid in requests and REBUILD_LABEL in labels:
