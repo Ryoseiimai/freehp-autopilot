@@ -49,7 +49,10 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       SITE_DIR: .site
     steps:
+      # 待たされた実行でも最新の状態から始める（イベント時点の古いコミットだと状態ファイルがぶつかる）
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: STOP の確認
         id: guard

@@ -19,6 +19,7 @@ for attempt in 1 2 3 4; do
     echo "状態を保存しました: $msg"
     exit 0
   fi
+  git rebase --abort 2>/dev/null || true
   sleep $((attempt * 5))
 done
 echo "状態の push に失敗しました" >&2

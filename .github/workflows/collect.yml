@@ -23,7 +23,10 @@ jobs:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       GH_TOKEN: ${{ github.token }}
     steps:
+      # 待たされた実行でも最新の状態から始める（イベント時点の古いコミットだと状態ファイルがぶつかる）
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: STOP の確認
         id: guard
