@@ -1,0 +1,76 @@
+name: Free動画の申し込み
+description: 動画の字幕・テロップ・カット・ぼかしをまとめて依頼します（1本980円・税込）。
+title: "[Free動画] "
+labels: ["video-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        動画そのもののアップロードは不要です。Googleドライブやギガファイル便などの共有リンクを教えてください。
+        長さは30分まで、納期の目安は24〜48時間です。
+  - type: input
+    id: name
+    attributes:
+      label: お名前・ハンドル
+      placeholder: 例）田中（Xは @tanaka_shop）
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: 連絡先
+      description: 完成のご連絡に使います（メールアドレス、またはXのDM等）。
+      placeholder: 例）tanaka@example.com
+    validations:
+      required: true
+  - type: input
+    id: video_url
+    attributes:
+      label: 動画の共有リンク
+      description: Googleドライブ、ギガファイル便など、閲覧・ダウンロードできるリンクを貼ってください。
+      placeholder: https://
+    validations:
+      required: true
+  - type: input
+    id: duration
+    attributes:
+      label: 動画の長さ
+      placeholder: 例）12分
+    validations:
+      required: true
+  - type: checkboxes
+    id: tasks
+    attributes:
+      label: やってほしいこと
+      description: 当てはまるものすべてにチェックしてください。
+      options:
+        - label: 字幕を付ける
+        - label: テロップを入れる
+        - label: 言い直し・待ち時間をカットする
+        - label: 個人情報（顔・名前・連絡先・画面の鍵など）をぼかす
+    validations:
+      required: true
+  - type: input
+    id: mood
+    attributes:
+      label: 雰囲気
+      description: テロップの雰囲気の希望があれば（任意）。
+      placeholder: 例）落ち着いた感じ／元気で明るい感じ
+  - type: input
+    id: due_date
+    attributes:
+      label: 納期の希望
+      description: 特にご希望がなければ空欄で構いません（目安24〜48時間でお届けします）。
+      placeholder: 例）10月3日までにほしい
+  - type: textarea
+    id: notes
+    attributes:
+      label: その他の希望・固有名詞など
+      description: 聞き取ってほしい固有名詞、隠してほしくない名前（ご本人の名前など）、その他ご要望があれば書いてください。
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: 個人情報の扱いへの同意
+      options:
+        - label: 動画に映る第三者の個人情報（顔・名前・メールアドレス・電話番号・画面に映る鍵情報など）はぼかして納品することに同意します。
+          required: true
