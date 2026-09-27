@@ -21,6 +21,7 @@
 import argparse
 import datetime
 import fcntl
+import json
 import os
 import pty
 import re
@@ -56,6 +57,10 @@ CLIPBOARD_EVERY_SEC = 1
 SUCCESS_WITHOUT_TOKEN_SEC = 8
 VERIFY_TIMEOUT_SEC = 120
 VERIFY_MODEL = "claude-sonnet-5"
+OPEN_TIMEOUT_SEC = 30
+ACTIONS_WAIT_SEC = 1200
+# post のログにこれが出ていれば、Claude が文章づくりか採点まで動いた
+LLM_RAN_MARKERS = ("DRY_RUN なので投稿していません", "関所で全部落ちた", "] 候補")
 FAKE_OPEN = '#!/bin/sh\nfor a in "$@"; do case "$a" in http*) printf "%s\\n" "$a" >> "$URL_FILE";; esac; done\n'
 
 
@@ -79,13 +84,14 @@ def url_identity(url):
 
 def open_in_chrome(url, profile):
     # 新しいウィンドウで開き、Chrome を最前面にする（Chrome を終了させる操作はしない）
-    subprocess.run(["/usr/bin/open", "-na", "Google Chrome", "--args", f"--profile-directory={profile}", "--new-window", url], check=True)
-    subprocess.run(["/usr/bin/osascript", "-e", 'tell application "Google Chrome" to activate'], capture_output=True)
+    # osascript で前面に出すと「Chrome を操作する許可」のダイアログで止まることがある（09:16 に2分止まった）ので使わない。
+    # open -a は既定でアプリを前面に出す
+    subprocess.run(["/usr/bin/open", "-na", "Google Chrome", "--args", f"--profile-directory={profile}", "--new-window", url],
+                   check=True, timeout=OPEN_TIMEOUT_SEC)
 
 
 def profile_label(profile_dir):
     try:
-        import json
         info = json.loads((CHROME_DIR / "Local State").read_text())["profile"]["info_cache"].get(profile_dir, {})
         return f"{profile_dir}（{info.get('user_name', '?')}）"
     except (OSError, ValueError, KeyError):
@@ -142,18 +148,64 @@ def stop_child(pid, fd):
             waited += POLL_SEC
 
 
-def verify_token(claude, token):
-    """そのトークンで claude -p が1回答えられるかを試す。トークンは環境変数でだけ渡す。"""
-    env = dict(os.environ, CLAUDE_CODE_OAUTH_TOKEN=token)
-    env.pop("ANTHROPIC_API_KEY", None)
-    cmd = [claude, "-p", "--model", VERIFY_MODEL, "--tools", "", "--output-format", "json", "--no-session-persistence",
-           "--setting-sources", "project", "--strict-mcp-config"]
+def clean_env(token):
+    """親の Claude Code セッションから引き継いだ CLAUDE*/ANTHROPIC* の環境変数を外す（HOME・PATH などは残す）。"""
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "ANTHROPIC"))}
+    env["CLAUDE_CODE_OAUTH_TOKEN"] = token
+    return env
+
+
+def verify_token(claude, token, debug_path):
+    """そのトークンで claude -p が1回答えられるかを手元で試す（参考。結果に関係なく secret には入れる）。
+
+    hooks は --settings で無効にし、設定は読み込まない。失敗の理由はトークンを伏せ字にして debug log に残す。
+    """
+    cmd = [claude, "-p", "--model", VERIFY_MODEL, "--output-format", "json", "--no-session-persistence",
+           "--setting-sources", "", "--settings", json.dumps({"disableAllHooks": True}), "--strict-mcp-config"]
     try:
         proc = subprocess.run(cmd, input="「OK」とだけ返してください。", capture_output=True, text=True,
-                              timeout=VERIFY_TIMEOUT_SEC, env=env, cwd=tempfile.gettempdir())
+                              timeout=VERIFY_TIMEOUT_SEC, env=clean_env(token), cwd=tempfile.gettempdir())
     except subprocess.TimeoutExpired:
+        write_debug(debug_path, "手元の検証: 時間切れ")
         return False
-    return proc.returncode == 0 and '"is_error":false' in proc.stdout.replace(" ", "")
+    ok = proc.returncode == 0 and '"is_error":false' in proc.stdout.replace(" ", "")
+    if not ok:
+        write_debug(debug_path, f"手元の検証: 終了コード {proc.returncode}\nstdout: {proc.stdout[-1500:]}\nstderr: {proc.stderr[-1500:]}")
+    return ok
+
+
+def write_debug(debug_path, text):
+    if not debug_path:
+        return
+    with open(debug_path, "ab") as f:
+        f.write(b"\n--- " + TOKEN_RE.sub(b"[REDACTED]", text.encode()) + b"\n")
+
+
+def actions_check(ghp, repo):
+    """post を dry_run=1 で起動し、Claude の段が本当に動いたかで鍵を確かめる。動かなければ secret を消す。"""
+    say("Actions の post を dry_run=1・型 part で起動して、Claude の段が動くか確かめます")
+    # 型は部品紹介に固定する（材料が8つあり、材料切れで Claude の前に止まることがない）
+    got = subprocess.run([ghp, "workflow", "run", "post.yml", "--repo", repo, "-f", "dry_run=1", "-f", "post_type=part"],
+                         capture_output=True, text=True, timeout=60)
+    m = re.search(r"/actions/runs/(\d+)", got.stdout + got.stderr)
+    if got.returncode != 0 or not m:
+        say(f"post を起動できませんでした（secret は残しています）: {(got.stderr or got.stdout)[:200]}")
+        return 1
+    run_id = m.group(1)
+    say(f"起動しました: https://github.com/{repo}/actions/runs/{run_id}（終わるまで待ちます）")
+    watched = subprocess.run([ghp, "run", "watch", run_id, "--repo", repo, "--exit-status"],
+                             capture_output=True, text=True, timeout=ACTIONS_WAIT_SEC)
+    log = subprocess.run([ghp, "run", "view", run_id, "--repo", repo, "--log"],
+                         capture_output=True, text=True, timeout=120).stdout
+    skipped = "Claude の鍵が未設定" in log
+    llm_ran = any(k in log for k in LLM_RAN_MARKERS)
+    if watched.returncode == 0 and llm_ran and not skipped:
+        say("Actions で Claude の段が動きました（鍵は有効）")
+        return 0
+    why = "Claude の鍵が未設定の扱い" if skipped else ("実行が失敗" if watched.returncode else "Claude の段の跡が無い")
+    subprocess.run([ghp, "secret", "delete", "CLAUDE_CODE_OAUTH_TOKEN", "--repo", repo], capture_output=True, timeout=60)
+    say(f"Actions で Claude の段が動かなかったので（{why}）、CLAUDE_CODE_OAUTH_TOKEN を消しました")
+    return 1
 
 
 def set_secret(ghp, repo, token):
@@ -296,14 +348,17 @@ def run(args):
     if not token:
         say("トークンが出ないまま終わりました（--debug-log で原因を確認）")
         return 1
-    say(f"トークンを受け取りました（{len(token)}文字）。claude -p で動くか試しています")
-    if not verify_token(claude, token):
-        say("そのトークンで claude -p が動かなかったので、secret には入れません")
-        return 1
+    say(f"トークンを受け取りました（{len(token)}文字）。手元の claude -p で試します（参考）")
+    if verify_token(claude, token, args.debug_log):
+        say("手元の claude -p で動きました")
+    else:
+        say("手元の claude -p では動きませんでした（理由は debug log）。本当の確認は Actions で行うので secret には入れます")
     set_secret(ghp, args.repo, token)
     token = None
     say(f"CLAUDE_CODE_OAUTH_TOKEN を {args.repo} の secret に入れました（値は表示していません）")
-    return 0
+    if args.no_actions_check:
+        return 0
+    return actions_check(ghp, args.repo)
 
 
 def main():
@@ -313,6 +368,7 @@ def main():
     ap.add_argument("--wait", type=int, default=1200, help="本人の承認を待つ最大秒数")
     ap.add_argument("--debug-log", help="伏せ字にした claude の出力を書く先（原因調べ用）")
     ap.add_argument("--no-open", action="store_true", help="ブラウザを開かない（起動・URL の形・片付けだけ試す）")
+    ap.add_argument("--no-actions-check", action="store_true", help="secret に入れた後の Actions での確認をしない")
     return run(ap.parse_args())
 
 
